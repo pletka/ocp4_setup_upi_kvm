@@ -519,8 +519,10 @@ for x in virsh virt-install virt-customize systemctl dig wget
 do
     builtin type -P $x &> /dev/null || err "executable $x not found"
 done
-for f in "/usr/lib64/libvirt/connection-driver/libvirt_driver_network.so" \
-         "/usr/share/libvirt/networks/default.xml"
+
+# Changed for Ubuntu 20.04 from https://github.com/kxr/ocp4_setup_upi_kvm/issues/22
+for f in "/usr/lib/x86_64-linux-gnu/libvirt/connection-driver/libvirt_driver_network.so" \
+	     "/etc/libvirt/qemu/networks/default.xml"
 do
     test -e "$f" &> /dev/null || err "file $f not found"
 done
@@ -607,7 +609,8 @@ elif [ -n "$VIR_NET_OCT" ]; then
         fi
     fi
     echo -n "====> Creating libvirt network ocp-${VIR_NET_OCT}"
-    /usr/bin/cp /usr/share/libvirt/networks/default.xml /tmp/new-net.xml > /dev/null || err "Network creation failed"
+    # Corrected path for Ubuntu
+    /usr/bin/cp /etc/libvirt/qemu/networks/default.xml /tmp/new-net.xml > /dev/null || err "Network creation failed"
     sed -i "s/default/ocp-${VIR_NET_OCT}/" /tmp/new-net.xml
     sed -i "s/virbr0/ocp-${VIR_NET_OCT}/" /tmp/new-net.xml
     sed -i "s/122/${VIR_NET_OCT}/g" /tmp/new-net.xml
@@ -781,6 +784,8 @@ echo -n "====> Downloading Centos 7 cloud image: "; download get "$LB_IMG" "$LB_
 echo -n "====> Copying Image for Loadbalancer VM: "
 cp "${CACHE_DIR}/CentOS-7-x86_64-GenericCloud.qcow2" "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" || \
     err "Copying '${VM_DIR}/CentOS-7-x86_64-GenericCloud.qcow2' to '${VM_DIR}/${CLUSTER_NAME}-lb.qcow2' failed"; ok
+# Added from https://github.com/kxr/ocp4_setup_upi_kvm/issues/22
+chown libvirt-qemu.kvm "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2"
 
 echo "====> Setting up Loadbalancer VM: "
 virt-customize -a "${VM_DIR}/${CLUSTER_NAME}-lb.qcow2" \
